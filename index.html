@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>건축사 작도 대시보드</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#e9e8e6; --card:#f4f3f1; --card2:#ffffff; --ink:#1d1d1b; --muted:#8a8884; --line:#dddbd7;
+  --orange:#e85d10; --peach:#f6b48f; --pink:#e8a3a8; --empty:#dedcd8; --cream:#fde9d6; --dark:#1b1b1a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{font-size:30px;font-weight:500;margin:0;letter-spacing:-.5px}
+.date-pill{font-size:12px;color:var(--muted);background:var(--card);border-radius:999px;padding:5px 12px;margin-left:10px;vertical-align:middle}
+.sync{font-size:12px;border-radius:999px;padding:6px 12px;background:var(--card);color:var(--muted);cursor:pointer;border:0;font-family:inherit}
+.sync.ok{color:#2f7a3a}.sync.warn{color:var(--orange)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.stat{background:var(--card);border-radius:20px;padding:18px 18px 16px;position:relative;overflow:hidden}
+.stat.hero{background:radial-gradient(120% 120% at 100% 0%,#ffb066 0%,#e85d10 38%,#2a1408 100%);color:#fff}
+.stat .lbl{font-size:15px;margin-top:22px}
+.stat .val{font-size:30px;font-weight:600;margin-top:4px;letter-spacing:-.5px}
+.stat .sub{position:absolute;top:14px;right:14px;font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.75);color:var(--muted)}
+.stat.hero .sub{background:rgba(255,255,255,.2);color:#fff}
+.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:12px;align-items:start}
+.card{background:var(--card);border-radius:22px;padding:20px}
+.card h2{font-size:19px;font-weight:500;margin:0 0 14px;display:flex;justify-content:space-between;align-items:center}
+.card h2 small{font-size:12px;color:var(--muted);font-weight:400}
+.heat{overflow-x:auto;padding-bottom:4px}
+.heat table{border-collapse:separate;border-spacing:4px;margin:0 auto}
+.heat th{font-size:11px;font-weight:500;color:var(--muted);text-align:left;white-space:nowrap;padding:0}
+.heat th.mh{position:relative;height:16px}
+.heat th.mh span{position:absolute;left:0;bottom:2px}
+.heat th.row{text-align:right;padding-right:4px}
+.heat td{width:30px;min-width:30px;max-width:30px;height:30px;border-radius:7px;background:#eceae7;position:relative;padding:0}
+.heat td.none{background:transparent}
+.heat td.plan{background:var(--empty)}
+.heat td.miss{background:var(--pink)}
+.heat td.l1{background:var(--orange)}
+.heat td.l2{background:#b8460b}
+.heat td.l3{background:#7a2c05}
+.heat td.today{outline:2px solid var(--ink);outline-offset:1px}
+.heat td.exam{background:var(--dark)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.donuts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.donut-card{text-align:center}
+.donut-card h2{justify-content:center}
+.ring{position:relative;width:170px;height:170px;margin:4px auto 10px}
+.ring svg{transform:rotate(-90deg)}
+.ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .pct b{font-size:32px;font-weight:600;letter-spacing:-.5px}
+.ring .pct span{font-size:12px;color:var(--muted)}
+.chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.chip{font-family:inherit;font-size:12px;border:0;border-radius:999px;padding:6px 11px;background:var(--card2);color:var(--muted);cursor:pointer}
+.chip.on{background:var(--orange);color:#fff}
+.check{background:var(--dark);color:#fff}
+.check h2 .badge{font-size:12px;background:#8a6a1e;color:#fff;border-radius:999px;padding:3px 10px;font-weight:500}
+.check .chips{justify-content:flex-start;margin-bottom:10px}
+.check .chip{background:#2c2c2a;color:#bdbbb6}
+.check .chip.on{background:var(--orange);color:#fff}
+.bar{height:6px;background:#2c2c2a;border-radius:99px;overflow:hidden;margin-bottom:12px}
+.bar i{display:block;height:100%;background:var(--orange);border-radius:99px;transition:width .3s}
+ul.list{list-style:none;margin:0;padding:0}
+ul.list li{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid #2a2a28;cursor:pointer;user-select:none}
+ul.list li:last-child{border-bottom:0}
+ul.list .tx{flex:1;min-width:0}
+ul.list .tx b{display:block;font-size:14px;font-weight:500}
+ul.list .tx span{font-size:11px;color:#8d8b86}
+ul.list .tag{font-size:10px;padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.p1{background:#5a2a0d;color:#ffb48a}.p2{background:#1f3d2a;color:#9fd8ae}.p3{background:#1d2f4d;color:#a9c6f5}.p4{background:#4d1d1d;color:#f5a9a9}
+.box{width:24px;height:24px;border-radius:50%;border:2px solid #555;flex:none;display:flex;align-items:center;justify-content:center;transition:.15s}
+li.done .box{background:#c58a1e;border-color:#c58a1e}
+li.done .box::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+li.done .tx b{color:#9a9893;text-decoration:line-through}
+li.is-today{background:#262624;border-radius:10px}
+li.past:not(.done) .tx span{color:var(--pink)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.on{display:flex}
+.modal .in{background:#fff;border-radius:18px;padding:22px;max-width:440px;width:100%;font-size:14px;line-height:1.6}
+.modal h3{margin:0 0 8px;font-weight:600}
+.modal input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin:8px 0}
+.modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.modal button{font:inherit;border:0;border-radius:10px;padding:9px 14px;cursor:pointer;background:var(--card)}
+.modal button.pri{background:var(--orange);color:#fff}
+.modal .err{color:#c0392b;font-size:13px;min-height:18px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;font-size:13px;padding:9px 16px;border-radius:999px;opacity:0;transition:.25s;pointer-events:none}
+.toast.on{opacity:1}
+@media (max-width:860px){
+  .grid{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  h1{font-size:24px}
+}
+@media (max-width:860px){
+  .check{order:-1}
+  .grid{display:flex;flex-direction:column}
+  .grid>div{width:100%}
+}
+@media (max-width:520px){
+  .wrap{padding:20px 14px 50px}
+  .card{padding:16px}
+  .heat table{border-spacing:3px}
+  .heat td{width:15px;min-width:15px;max-width:15px;height:15px;border-radius:4px}
+  .heat th{font-size:10px}
+  .ring{width:140px;height:140px}
+  .ring svg{width:140px;height:140px}
+  .ring .pct b{font-size:26px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>건축사 작도<span class="date-pill" id="today"></span></h1></div>
+    <button class="sync" id="syncBtn">동기화 확인 중…</button>
+  </header>
+
+  <section class="stats">
+    <div class="stat hero"><span class="sub" id="dday"></span><div class="lbl">시험까지</div><div class="val" id="daysLeft">-</div></div>
+    <div class="stat"><span class="sub">전체</span><div class="lbl">완료한 작도</div><div class="val" id="doneCount">-</div></div>
+    <div class="stat"><span class="sub">지난 일정</span><div class="lbl">밀린 작도</div><div class="val" id="missCount">-</div></div>
+    <div class="stat"><span class="sub">연속</span><div class="lbl">연속 공부일</div><div class="val" id="streak">-</div></div>
+  </section>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2>공부 기록 <small>체크한 날 기준</small></h2>
+        <div class="heat" id="heat"></div>
+        <div class="legend">
+          <span><i style="background:var(--empty)"></i>예정</span>
+          <span><i style="background:var(--orange)"></i>1개</span>
+          <span><i style="background:#b8460b"></i>2개</span>
+          <span><i style="background:#7a2c05"></i>3개 이상</span>
+          <span><i style="background:var(--pink)"></i>밀림</span>
+          <span><i style="background:var(--dark)"></i>시험</span>
+        </div>
+      </div>
+      <div class="donuts">
+        <div class="card donut-card">
+          <h2>월별 완성도</h2>
+          <div class="ring" id="ringMonth"></div>
+          <div class="chips" id="monthChips"></div>
+        </div>
+        <div class="card donut-card">
+          <h2>전체 완성도</h2>
+          <div class="ring" id="ringAll"></div>
+          <div class="chips"><span class="chip" id="allLabel" style="cursor:default"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card check">
+      <h2>월별 체크리스트 <span class="badge" id="listBadge"></span></h2>
+      <div class="chips" id="listChips"></div>
+      <div class="bar"><i id="listBar"></i></div>
+      <ul class="list" id="list"></ul>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="in">
+    <h3>폰·PC 동기화 설정</h3>
+    <div>GitHub 토큰을 한 번 넣으면 체크할 때마다 저장소의 <code>progress.json</code>에 기록됩니다. 토큰은 이 기기 브라우저에만 저장됩니다.</div>
+    <input id="tokenIn" type="password" placeholder="github_pat_…" autocomplete="off">
+    <div class="err" id="tokenErr"></div>
+    <div class="row">
+      <button id="tokenClear">토큰 지우기</button>
+      <button id="tokenCancel">닫기</button>
+      <button class="pri" id="tokenSave">저장</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const MONTHS=["26년 11월","26년 12월","27년 1월","27년 2~3월"];
+const MONTH_SHORT={"26년 11월":"11월","26년 12월":"12월","27년 1월":"1월","27년 2~3월":"2~3월"};
+const PERIOD={1:"1교시",2:"2교시",3:"3교시",4:"총정리"};
+const DOW="일월화수목금토";
+const $=id=>document.getElementById(id);
+
+let schedule=null, progress={done:{}}, sha=null;
+let repo=detectRepo();
+let token=safeGet("ghToken");
+let monthSel=null, listSel=null, saveTimer=null, saving=false, dirty=false;
+
+function safeGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function safeSet(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}
+function detectRepo(){
+  const h=location.hostname, parts=location.pathname.split("/").filter(Boolean);
+  if(h.endsWith(".github.io")){
+    const owner=h.split(".")[0];
+    const name=parts.length&&!parts[0].includes(".")?parts[0]:h;
+    return {owner,name};
+  }
+  return null;
+}
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parse(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+const TODAY=ymd(new Date());
+
+async function load(){
+  schedule=await (await fetch("schedule.json?"+Date.now())).json();
+  const local=safeGet("progress");
+  if(local){try{progress=JSON.parse(local)}catch(e){}}
+  await pull();
+  const cur=schedule.items.find(i=>i.d>=TODAY);
+  monthSel=listSel=(cur?cur.m:MONTHS[MONTHS.length-1]);
+  render();
+}
+
+async function pull(){
+  if(!repo){setSync("warn","로컬 미리보기 (저장: 이 브라우저)");return}
+  try{
+    const headers={"Accept":"application/vnd.github+json"};
+    if(token)headers.Authorization="Bearer "+token;
+    const r=await fetch(`https://api.github.com/repos/${repo.owner}/${repo.name}/contents/progress.json?ref=main&t=${Date.now()}`,{headers,cache:"no-store"});
+    if(!r.ok)throw new Error(r.status);
+    const j=await r.json();
+    sha=j.sha;
+    const remote=JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,"")))));
+    const localDone=progress.done||{};
+    progress={done:Object.assign({},remote.done||{},token?{}:localDone)};
+    if(token){
+      const pending=safeGet("pending");
+      if(pending){try{Object.assign(progress.done,JSON.parse(pending).done||{});for(const k of JSON.parse(pending).removed||[])delete progress.done[k]}catch(e){}}
+    }
+    safeSet("progress",JSON.stringify(progress));
+    setSync(token?"ok":"warn",token?"동기화 켜짐":"동기화 꺼짐 · 설정");
+  }catch(e){
+    setSync("warn","오프라인 · 이 브라우저에 저장");
+  }
+}
+
+function setSync(cls,txt){const b=$("syncBtn");b.className="sync "+cls;b.textContent=txt}
+
+function toggle(id){
+  if(progress.done[id])delete progress.done[id]; else progress.done[id]=TODAY;
+  safeSet("progress",JSON.stringify(progress));
+  render();
+  if(token&&repo){dirty=true;clearTimeout(saveTimer);saveTimer=setTimeout(push,900);setSync("warn","저장 중…")}
+}
+
+async function push(){
+  if(saving){saveTimer=setTimeout(push,600);return}
+  saving=true;dirty=false;
+  const body=JSON.stringify(progress,null,1)+"\n";
+  const doPut=async()=>{
+    const r=await fetch(`https://api.github.com/repos/${repo.owner}/${repo.name}/contents/progress.json`,{
+      method:"PUT",
+      headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token},
+      body:JSON.stringify({message:"체크리스트 업데이트 "+TODAY,content:btoa(unescape(encodeURIComponent(body))),sha,branch:"main"})
+    });
+    return r;
+  };
+  try{
+    let r=await doPut();
+    if(r.status===409||r.status===422){
+      const mine=JSON.parse(JSON.stringify(progress));
+      await pullShaOnly();
+      progress=mine;
+      r=await doPut();
+    }
+    if(r.status===401||r.status===403){setSync("warn","토큰 확인 필요");toast("토큰 권한을 확인해 주세요");saving=false;return}
+    if(!r.ok)throw new Error(r.status);
+    sha=(await r.json()).content.sha;
+    setSync("ok","동기화 켜짐 · 저장됨");
+  }catch(e){
+    setSync("warn","저장 실패 · 다시 시도");toast("저장에 실패했어요. 잠시 후 다시 시도합니다");
+    setTimeout(push,5000);
+  }
+  saving=false;
+  if(dirty){clearTimeout(saveTimer);saveTimer=setTimeout(push,400)}
+}
+async function pullShaOnly(){
+  const r=await fetch(`https://api.github.com/repos/${repo.owner}/${repo.name}/contents/progress.json?ref=main&t=${Date.now()}`,{headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token},cache:"no-store"});
+  if(r.ok)sha=(await r.json()).sha;
+}
+
+function render(){
+  const items=schedule.items, done=progress.done;
+  const exam=parse(schedule.exam), now=parse(TODAY);
+  const left=Math.round((exam-now)/864e5);
+  const t=new Date();
+  $("today").textContent=`${t.getFullYear()}.${t.getMonth()+1}.${t.getDate()} (${DOW[t.getDay()]})`;
+  $("daysLeft").textContent=left>0?left+"일":left===0?"오늘":"끝";
+  $("dday").textContent=left>0?"D-"+left:"D-day";
+  const nDone=items.filter(i=>done[i.id]).length;
+  $("doneCount").textContent=nDone+" / "+items.length;
+  $("missCount").textContent=items.filter(i=>i.d<TODAY&&!done[i.id]).length+"개";
+  $("streak").textContent=streak()+"일";
+  renderHeat();
+  const mItems=items.filter(i=>i.m===monthSel);
+  ring("ringMonth",mItems.filter(i=>done[i.id]).length,mItems.length,"#e85d10");
+  $("monthChips").innerHTML=MONTHS.map(m=>`<button class="chip ${m===monthSel?"on":""}" data-m="${m}">${MONTH_SHORT[m]}</button>`).join("");
+  ring("ringAll",nDone,items.length,"#1b1b1a");
+  $("allLabel").textContent=`시험까지 ${items.length}개`;
+  renderList();
+}
+
+function streak(){
+  const days=new Set(Object.values(progress.done));
+  let d=new Date(), n=0;
+  if(!days.has(ymd(d)))d.setDate(d.getDate()-1);
+  while(days.has(ymd(d))){n++;d.setDate(d.getDate()-1)}
+  return n;
+}
+
+function ring(id,v,total,color){
+  const pct=total?Math.round(v/total*100):0, R=70, C=2*Math.PI*R;
+  $(id).innerHTML=`<svg width="170" height="170" viewBox="0 0 170 170">
+    <circle cx="85" cy="85" r="${R}" fill="none" stroke="#dedcd8" stroke-width="16"/>
+    <circle cx="85" cy="85" r="${R}" fill="none" stroke="${color}" stroke-width="16" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}" style="transition:stroke-dashoffset .5s"${pct===0?' opacity="0"':""}/>
+  </svg><div class="pct"><b>${pct}%</b><span>${v} / ${total}</span></div>`;
+}
+
+function renderHeat(){
+  const items=schedule.items, done=progress.done;
+  const planned={}; for(const i of items)(planned[i.d]=planned[i.d]||[]).push(i);
+  const doneByDay={}; for(const id in done){const d=done[id];doneByDay[d]=(doneByDay[d]||0)+1}
+  const start=parse(items[0].d); start.setDate(start.getDate()-start.getDay()+1); if(start>parse(items[0].d))start.setDate(start.getDate()-7);
+  const end=parse(schedule.exam);
+  const weeks=[]; for(let d=new Date(start);d<=end;d.setDate(d.getDate()+7))weeks.push(new Date(d));
+  const rows=[1,2,3,4,5,6,0];
+  let h=`<table><tr><th></th>`;
+  let lastM=-1;
+  for(const w of weeks){const m=w.getMonth();h+=`<th class="mh">${m!==lastM?"<span>"+(m+1)+"월</span>":""}</th>`;lastM=m}
+  h+=`</tr>`;
+  for(const r of rows){
+    h+=`<tr><th class="row">${DOW[r]}</th>`;
+    for(const w of weeks){
+      const d=new Date(w); d.setDate(d.getDate()+((r+6)%7));
+      const k=ymd(d); let cls="none", title=`${d.getMonth()+1}/${d.getDate()}`;
+      const n=doneByDay[k]||0, p=planned[k]||[];
+      if(k===schedule.exam){cls="exam";title+=" 시험"}
+      else if(n>0){cls=n>=3?"l3":n===2?"l2":"l1";title+=` 완료 ${n}개`}
+      else if(p.length){cls=(k<TODAY&&p.some(i=>!done[i.id]))?"miss":"plan";title+=" "+p.map(i=>i.t).join(", ")}
+      else if(d<start||d>end)cls="none";
+      else cls="";
+      if(k===TODAY)cls+=" today";
+      h+=`<td class="${cls}" title="${title}"></td>`;
+    }
+    h+=`</tr>`;
+  }
+  $("heat").innerHTML=h+`</table>`;
+}
+
+function renderList(){
+  const done=progress.done;
+  const items=schedule.items.filter(i=>i.m===listSel);
+  const n=items.filter(i=>done[i.id]).length;
+  $("listBadge").textContent=`${n}/${items.length}`;
+  $("listBar").style.width=(items.length?n/items.length*100:0)+"%";
+  $("listChips").innerHTML=MONTHS.map(m=>`<button class="chip ${m===listSel?"on":""}" data-l="${m}">${MONTH_SHORT[m]}</button>`).join("");
+  $("list").innerHTML=items.map(i=>{
+    const d=parse(i.d);
+    const cls=[done[i.id]?"done":"",i.d===TODAY?"is-today":"",i.d<TODAY?"past":""].join(" ");
+    const sub=`${d.getMonth()+1}/${d.getDate()} (${DOW[d.getDay()]})`+(i.n?" · "+i.n:"")+(done[i.id]&&done[i.id]!==i.d?` · ${done[i.id].slice(5).replace("-","/")} 완료`:"");
+    return `<li class="${cls}" data-id="${i.id}"><div class="tx"><b>${i.t}<span class="tag p${i.p}">${PERIOD[i.p]}</span></b><span>${sub}</span></div><div class="box"></div></li>`;
+  }).join("");
+}
+
+document.addEventListener("click",e=>{
+  const li=e.target.closest("li[data-id]"); if(li){toggle(li.dataset.id);return}
+  const m=e.target.closest("[data-m]"); if(m){monthSel=m.dataset.m;render();return}
+  const l=e.target.closest("[data-l]"); if(l){listSel=l.dataset.l;renderList();return}
+});
+$("syncBtn").onclick=()=>{$("tokenIn").value="";$("tokenErr").textContent="";$("modal").classList.add("on")};
+$("tokenCancel").onclick=()=>$("modal").classList.remove("on");
+$("tokenClear").onclick=()=>{token=null;safeSet("ghToken",null);$("modal").classList.remove("on");setSync("warn","동기화 꺼짐 · 설정")};
+$("tokenSave").onclick=async()=>{
+  const v=$("tokenIn").value.trim(); if(!v){$("tokenErr").textContent="토큰을 입력해 주세요";return}
+  if(!repo){$("tokenErr").textContent="GitHub Pages 주소에서 열었을 때만 동기화할 수 있어요";return}
+  $("tokenErr").textContent="확인 중…";
+  const r=await fetch(`https://api.github.com/repos/${repo.owner}/${repo.name}`,{headers:{"Authorization":"Bearer "+v,"Accept":"application/vnd.github+json"}});
+  if(!r.ok){$("tokenErr").textContent="토큰이 맞지 않거나 이 저장소 권한이 없어요";return}
+  const j=await r.json();
+  if(!(j.permissions&&j.permissions.push)){$("tokenErr").textContent="이 토큰에 쓰기(Contents: Read and write) 권한이 없어요";return}
+  const localDone=Object.assign({},progress.done);
+  token=v;safeSet("ghToken",v);$("modal").classList.remove("on");
+  await pull();
+  Object.assign(progress.done,localDone);
+  render();push();toast("동기화를 켰어요");
+};
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),2200)}
+document.addEventListener("visibilitychange",async()=>{if(document.visibilityState==="visible"&&!saving&&!dirty){await pull();render()}});
+load();
+</script>
+</body>
+</html>
